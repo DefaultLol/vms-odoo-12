@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_product_form_vms" model="ir.ui.view">
+        <field name="model">product.template</field>
+        <field name="priority">50</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <div name="options" position="before">
+                <div>
+                    <field name="spare_part" />
+                    <label for="spare_part" />
+                </div>
+            </div>
+        </field>
+    </record>
+</odoo>

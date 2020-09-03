@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<odoo>
+    <report
+        id="report_report_card"
+        string="Report pdf"
+        model="vms.report"
+        report_type="qweb-pdf"
+        name="vms.report_report"
+        file="vms.report_report"
+    />
+</odoo>

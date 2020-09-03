@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <menuitem id="menu_vms" name="Maintenance" sequence="10" />
+    <menuitem id="menu_vms_maintenance" name="Maintenance" parent="menu_vms" sequence="10" />
+    <menuitem id="menu_vms_settings" name="Settings" parent="menu_vms" sequence="20" />
+</odoo>

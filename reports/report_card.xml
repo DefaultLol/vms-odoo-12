@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_report">
+        <t t-call="web.html_container">
+            <h4>Report</h4>
+            <t t-call="web.internal_layout">
+                <t t-foreach="docs" t-as="doc">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6"><strong>Date : </strong><t t-esc="doc.date" /></div>
+                            <div class="col-6"><strong>Base : </strong><t t-esc="doc.unit_id.name" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4"><strong>Unit : </strong><t t-esc="doc.unit_id.model_id.name" /></div>
+                            <div class="col-4"><strong>Kilometre nouveau : </strong><t t-esc="doc.kilometre_new" /></div>
+                            <div class="col-4"><strong>Kilometre actuel : </strong><t t-esc="doc.kilometre_actuel" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><strong>Notes : </strong><span t-raw="doc.notes"></span></div>
+                            <div class="col-6"><strong>State : </strong><t t-esc="doc.state" /></div>
+                        </div>
+                        <div class="row mt-5">
+                            <div class="offset-8 col-3">
+                                <p>Signature</p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
