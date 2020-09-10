@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="vms_stock_picking_form_view" model="ir.ui.view">
+        <field name="name">Stock picking</field>
+        <field name="model">stock.picking</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <field name="origin" position="after">
+                <field name="odometer" attrs="{'invisible': [('picking_type_id','!=',7)]}" force_save="1" />
+            </field>
+        </field>
+    </record>
+    <menuitem action="fleet.fleet_vehicle_action" id="vms_fleet_vehicle_menu" name="Units" parent="menu_vms_settings" sequence="40"/>
+</odoo>

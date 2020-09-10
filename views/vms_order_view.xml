@@ -61,7 +61,7 @@
                                 <field attrs="{'invisible': [('start_date_real', '=', False)]}" name="end_date_real"/>
                             </group>
                             <group string="Tasks" attrs="{'invisible':[('name', '=', False)]}">
-<!--                                <field context="{'default_order_id': active_id}" name="order_line_ids" nolabel="1"/>-->
+                                <field context="{'default_order_id': active_id}" name="order_line_ids" nolabel="1"/>
                             </group>
                         </page>
                         <page string="MRO Program Details" attrs="{'invisible':[('type','in',(False,'corrective'))]}">
@@ -107,6 +107,22 @@
 <!--            </gantt>-->
 <!--        </field>-->
 <!--    </record>-->
+
+    <!-- Search view -->
+    <record id="vms_order_search" model="ir.ui.view">
+        <field name="name">vms.order.search</field>
+        <field name="model">vms.order</field>
+        <field name="arch" type="xml">
+            <search string="Search Orders">
+                <field name="name" filter_domain="['|',('name', 'ilike', self),('supervisor_id','ilike',self)]" />
+                <separator />
+                <group string="Group By">
+                    <filter name="group_by_supervisor" string="Supervisors" context="{'group_by': 'supervisor_id'}"/>
+                    <filter name="group_by_unit" string="Units" context="{'group_by': 'unit_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
     <record id="action_vms_order" model="ir.actions.act_window">
         <field name="name">Order</field>
         <field name="type">ir.actions.act_window</field>

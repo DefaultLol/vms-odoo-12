@@ -10,6 +10,7 @@
                         <field name='name'/>
                         <field name='active'/>
                         <field name='frequency'/>
+                        <field name='uom_id' />
                     </group>
                     <group string='Tasks'>
                         <field name="task_ids" nolabel="1">
@@ -17,14 +18,6 @@
                             <field name='name'/>
                             <field name='duration' widget="float_time"/>
                           </tree>
-                        </field>
-                    </group>
-                    <group string='Cycles'>
-                        <field name='cycle_ids' nolabel="1" domain="[('id','!=',active_id)]">
-                            <tree>
-                                <field name='name'/>
-                                <field name='frequency'/>
-                            </tree>
                         </field>
                     </group>
                 </sheet>

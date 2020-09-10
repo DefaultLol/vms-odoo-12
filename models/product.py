@@ -1,6 +1,5 @@
 from odoo import fields, models
 
-
 class OperatingUnit(models.Model):
     _inherit = 'product.template'
 

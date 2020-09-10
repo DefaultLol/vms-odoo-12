@@ -7,11 +7,6 @@ class VmsCycle(models.Model):
 
     name = fields.Char(required=True)
     task_ids = fields.Many2many('vms.task', string="Tasks", required=True)
-    cycle_ids = fields.Many2many(
-        comodel_name='vms.cycle',
-        relation='vms_cycle_rel',
-        column1='cycle',
-        column2='other_cycle',
-        string='Cycles')
     frequency = fields.Integer(required=True)
+    uom_id = fields.Many2one('uom.uom',ondelete='set null',string="Unité de mesure",index=True,required=True)
     active = fields.Boolean(default=True)

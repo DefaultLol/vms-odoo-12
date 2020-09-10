@@ -46,11 +46,11 @@ class VmsOrder(models.Model):
         readonly=True,
         string='Real end date'
     )
-    # order_line_ids = fields.One2many(
-    #     'vms.order.line',
-    #     'order_id',
-    #     string='Order Lines',
-    # )
+    order_line_ids = fields.One2many(
+        'vms.order.line',
+        'order_id',
+        string='Order Lines',
+    )
     program_id = fields.Many2one(
         'vms.program',
         string='Program')
@@ -82,6 +82,16 @@ class VmsOrder(models.Model):
     #     readonly=True,
     #     copy=False,)
 
+    @api.onchange('program_id')
+    def change_program(self):
+        self.order_line_ids=False
+        for cycle in self.program_id.cycle_ids:
+            for task in cycle.task_ids:
+                spare = self.order_line_ids.new({
+                    'task_id': task.id,
+                    'duration': task.duration,
+                })
+                self.order_line_ids += spare
     # @api.multi
     # @api.depends('procurement_group_id')
     # def _compute_picking_ids(self):
@@ -140,34 +150,34 @@ class VmsOrder(models.Model):
                     if line.state == 'done':
                         sum_time += line.real_duration
                 strp_date = datetime.strptime(
-                    rec.start_date_real, "%Y-%m-%d %H:%M:%S")
+                    str(rec.start_date_real), "%Y-%m-%d %H:%M:%S")
                 rec.end_date_real = strp_date + timedelta(hours=sum_time)
 
-    # @api.multi
-    # def action_released(self):
-    #     for order in self:
-    #         for line in order.order_line_ids:
-    #             line.action_done()
-    #         # if order.type == 'preventive':
-    #             # Preguntar que tenemos que hacer ahora.
-    #         if order.type == 'corrective':
-    #             for report in order.report_ids:
-    #                 report.state = 'close'
-    #         order.state = 'released'
+    @api.multi
+    def action_released(self):
+        for order in self:
+            for line in order.order_line_ids:
+                line.action_done()
+            # if order.type == 'preventive':
+                # Preguntar que tenemos que hacer ahora.
+            if order.type == 'corrective':
+                for report in order.report_ids:
+                    report.state = 'closed'
+            order.state = 'released'
 
-    # @api.multi
-    # @api.onchange('type', 'unit_id')
-    # def _onchange_type(self):
-    #     for rec in self:
-    #         if rec.type == 'preventive':
-    #             rec.program_id = rec.unit_id.program_id
-    #             rec.current_odometer = rec.unit_id.odometer
-    #             rec.order_line_ids = False
-    #         else:
-    #             rec.program_id = False
-    #             rec.current_odometer = False
-    #             rec.sequence = False
-    #             rec.order_line_ids = False
+    @api.multi
+    @api.onchange('type', 'unit_id')
+    def _onchange_type(self):
+        for rec in self:
+            if rec.type == 'preventive':
+                rec.program_id = rec.unit_id.program_id
+                rec.current_odometer = rec.unit_id.odometer
+                rec.order_line_ids = False
+            else:
+                rec.program_id = False
+                rec.current_odometer = False
+                rec.sequence = False
+                rec.order_line_ids = False
 
     # @api.depends('order_line_ids')
     # def _compute_end_date(self):
@@ -180,24 +190,25 @@ class VmsOrder(models.Model):
     #                 rec.start_date, "%Y-%m-%d %H:%M:%S")
     #             rec.end_date = strp_date + timedelta(hours=sum_time)
     #
-    # @api.multi
-    # def action_open(self):
-    #     for rec in self:
-    #         orders = self.search_count([
-    #             ('unit_id', '=', rec.unit_id.id), ('state', '=', 'open'),
-    #             ('id', '!=', rec.id)])
-    #         if orders > 0:
-    #             raise ValidationError(_(
-    #                 'Unit not available for maintenance because it has more '
-    #                 'open order(s).'))
-    #         if not rec.order_line_ids:
-    #             raise ValidationError(_(
-    #                 'The order must have at least one task'))
-    #         rec.state = 'open'
-    #         if rec.type == 'corrective':
-    #             rec.report_ids.write({'state': 'pending'})
-    #         rec.order_line_ids.action_process()
-    #         rec.start_date_real = fields.Datetime.now()
+    @api.multi
+    def action_open(self):
+        for rec in self:
+            #check if there is an order sticked to the vehicle already and the order is open
+            orders = self.search_count([
+                ('unit_id', '=', rec.unit_id.id), ('state', '=', 'open'),
+                ('id', '!=', rec.id)])
+            if orders > 0:
+                raise ValidationError(_(
+                    'Unit not available for maintenance because it has more '
+                    'open order(s).'))
+            if not rec.order_line_ids:
+                raise ValidationError(_(
+                    'The order must have at least one task'))
+            rec.state = 'open'
+            if rec.type == 'corrective':
+                rec.report_ids.write({'state': 'pending'})
+            rec.order_line_ids.action_process(self.unit_id)
+            rec.start_date_real = fields.Datetime.now()
     #
     # @api.multi
     # def action_cancel(self):

@@ -70,8 +70,9 @@ class VmsReport(models.Model):
 
     @api.model
     def create(self, values):
-        self._cr.execute(
-            "UPDATE fleet_vehicle_odometer SET value={} WHERE vehicle_id={} ".format(values['kilometre_new'],values['unit_id']))
+        self.update_kilometrage(values)
+        # self._cr.execute(
+        #     "UPDATE fleet_vehicle_odometer SET value={} WHERE vehicle_id={} ".format(values['kilometre_new'],values['unit_id']))
         res = super(VmsReport, self).create(values)
         if res.operating_unit_id.report_sequence_id:
             sequence = res.operating_unit_id.report_sequence_id
@@ -93,6 +94,12 @@ class VmsReport(models.Model):
     #     'odometer':self.unit_id.odometer
     # })
 
+    @api.multi
+    def write(self,vals):
+        print('update')
+        self.update_kilometrage(vals)
+        super(VmsReport,self).write(vals)
+
     def action_confirmed(self):
         for rec in self:
             rec.state = 'closed'
@@ -104,3 +111,19 @@ class VmsReport(models.Model):
     def action_pending(self):
         for rec in self:
             rec.state = 'pending'
+
+    def update_kilometrage(self,values):
+        if 'unit_id' not in values:
+            for x in self:
+                values['unit_id']=x.unit_id.id
+
+        if 'kilometre_new' not in values:
+            for x in self:
+                values['kilometre_new']=x.kilometre_new
+
+        vehicle = self.env['fleet.vehicle.odometer'].search([
+            ('vehicle_id', '=', values['unit_id'])
+        ])
+        vehicle.write({
+            'value': values['kilometre_new']
+        })

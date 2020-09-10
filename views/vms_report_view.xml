@@ -54,6 +54,22 @@
                 </form>
             </field>
         </record>
+
+        <!-- Search view -->
+        <record id="vms_report_search" model="ir.ui.view">
+            <field name="name">vms.report.search</field>
+            <field name="model">vms.report</field>
+            <field name="arch" type="xml">
+                <search string="Search Reports">
+                    <field name="name" filter_domain="['|',('name', 'ilike', self),('unit_id','ilike',self)]" />
+                    <separator />
+                    <group string="Group By">
+                        <filter name="group_by_unit" string="Units" context="{'group_by': 'unit_id'}"/>
+                        <filter name="group_by_driver" string="Drivers" context="{'group_by': 'employee_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
 |       <record id="action_vms_report" model="ir.actions.act_window">
             <field name="name">Report</field>
             <field name="type">ir.actions.act_window</field>

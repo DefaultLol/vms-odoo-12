@@ -5,4 +5,4 @@ class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     mechanic = fields.Boolean(
-        help='Validates if the employee is mechanic.')
+        help='Validates if the employee is mechanic.',default=True)
