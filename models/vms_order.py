@@ -240,3 +240,10 @@ class VmsOrder(models.Model):
     # @api.multi
     # def print_mo(self):
     #     return self.env['report'].get_action(self, 'vms.report_maintenance')
+
+    # This method will be executed by the planned action to create new order
+    @api.model
+    def create_order(self):
+        vehicles=self.env['fleet.vehicle'].search([])
+        for vehicle in vehicles:
+            print(vehicle.name)

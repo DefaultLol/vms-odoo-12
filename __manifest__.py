@@ -16,10 +16,12 @@
         'stock',
         'sale',
         'stock_operating_unit',
-        'bsr_fleet_stock_analytic'
+        'bsr_fleet_stock_analytic',
+        'purchase_requisition'
     ],
     'data': [
         'security/ir.model.access.csv',
+        'wizards/vms_release_order_view.xml',
         'views/vms_view.xml',
         'views/vms_report_view.xml',
         'views/vms_order_view.xml',
@@ -32,12 +34,14 @@
         'views/product_template_view.xml',
         'views/vms_order_line_view.xml',
         'views/stock_picking_view.xml',
+        'views/fleet_vehicle_odometer_view.xml',
         'wizards/vms_wizard_maintenance_order_view.xml',
         'reports/report.xml',
         'reports/report_card.xml',
         'data/report_sequence.xml',
         'data/ir_sequence_data.xml',
         'data/stock_picking_type_data.xml',
+        'data/cron_order.xml'
     ],
     'demo': [
     ],

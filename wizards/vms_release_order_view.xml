@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="vms_wizard_order" model="ir.ui.view">
+        <field name="name">Release order</field>
+        <field name="model">vms.wizard.release.order</field>
+        <field name="arch" type="xml">
+            <form string="Release order">
+                <group string="Stock picking">
+                    <field name="invisible_field" invisible="1" />
+                    <field name="finished" invisible="1" />
+                    <field name="transfert" nolabel="1">
+                        <tree>
+                            <field name="name" />
+                            <field name="state" />
+                        </tree>
+                    </field>
+                </group>
+            </form>
+            <footer>
+                <label for="my_button" class="btn btn-md btn-primary" string="Confirm"
+                       attrs="{'invisible': [('finished','=', True)]}" />
+                <field name="my_button" invisible="1"/>
+                <button class="oe_link" special="cancel" string="Cancel"/>
+            </footer>
+        </field>
+    </record>
+    <record model="ir.actions.act_window" id="wizard_release_action">
+        <field name="name">Open dialog</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">vms.wizard.release.order</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="vms_wizard_order" />
+        <field name="target">new</field>
+    </record>
+</odoo>

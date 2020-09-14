@@ -21,6 +21,14 @@ class VmsOrderLine(models.Model):
     #     #
     #     # return end_date
 
+    @api.depends('start_date')
+    def _end_date_default(self):
+        for rec in self:
+            if rec.start_date:
+                strp_date = datetime.strptime(
+                    str(rec.start_date), "%Y-%m-%d %H:%M:%S")
+                rec.end_date = strp_date + timedelta(hours=rec.duration)
+
     task_id = fields.Many2one(
         'vms.task', string='Task',
         required=True)
@@ -30,8 +38,8 @@ class VmsOrderLine(models.Model):
         required=True)
     end_date = fields.Datetime(
         string='Schedule end',
-        store=True,
-        readonly=True)
+        compute='_end_date_default',
+        store=True)
     start_date_real = fields.Datetime(
         string='Real start date', readonly=True)
     end_date_real = fields.Datetime(
@@ -58,6 +66,11 @@ class VmsOrderLine(models.Model):
         'order_line_id',
         string='Spare Parts',
         help='You must save the order to select the mechanic(s).')
+    spare_part_ids1 = fields.One2many(
+        'vms.product.line',
+        'purchase_request',
+        string='Appel d\'offres associés',
+        help='You must save the order to select the mechanic(s).')
     purchase_order_id = fields.Many2one(
         'purchase.order',
         string='Purchase Order',
@@ -66,29 +79,42 @@ class VmsOrderLine(models.Model):
         string="Purchase Order State Done",
         compute='_compute_purchase_state')
     order_id = fields.Many2one('vms.order', string='Order', readonly=True)
-    real_time_total = fields.Integer()\
+    real_time_total = fields.Integer()
+
+    # @api.model
+    # def default_get(self, fields):
+    #     res=super(VmsOrderLine,self).default_get(fields)
+    #     order_id = self._context.get('default_task_id')
+    #     print(order_id)
+    #     spare_part_ids=[(5,0,0)]
+    #     data=self.env['vms.product.line'].search([])
+    #     print('test')
+    #     print(self.get_current_task())
+    #     for rec in data:
+    #         line=(0,0,{
+    #             'product_id':1,
+    #             'product_qty':15,
+    #             'product_uom_id':1
+    #         })
+    #         spare_part_ids.append(line)
+    #     res.update({
+    #         'spare_part_ids':spare_part_ids
+    #     })
+    #     return res
+
+    def get_current_task(self):
+        print(self.task_id)
+        return self.task_id
 
     @api.multi
     def unlink(self):
         self.spare_part_ids.unlink()
         return super(VmsOrderLine, self).unlink()
 
-    @api.onchange('external')
-    def _onchange_external(self):
-        for rec in self:
-            if rec.external:
-                rec.spare_part_ids = False
-            else:
-                for spare_part in rec.task_id.spare_part_ids:
-                    spare = rec.spare_part_ids.new({
-                        'product_id': spare_part.product_id.id,
-                        'product_qty': spare_part.product_qty,
-                        'product_uom_id': spare_part.product_uom_id.id,
-                        'state': 'draft'})
-                    rec.spare_part_ids += spare
-
     @api.onchange('task_id')
     def _onchange_task(self):
+        print(self.task_id)
+        self.clear_field1()
         for rec in self:
             rec.duration = rec.task_id.duration
             if rec.start_date:
@@ -101,6 +127,7 @@ class VmsOrderLine(models.Model):
                     'product_qty': spare_part.product_qty,
                     'product_uom_id': spare_part.product_uom_id.id,
                     'state': 'draft'})
+
                 rec.spare_part_ids += spare
 
     @api.onchange('duration')
@@ -118,6 +145,10 @@ class VmsOrderLine(models.Model):
             end_date = datetime.strptime(rec.end_date_real, '%Y-%m-%d')
             total_days = start_date - end_date
             rec.real_time_total = total_days.days
+
+    @api.depends('task_id')
+    def lol(self):
+        print('lol')
 
     @api.depends('purchase_order_id')
     def _compute_purchase_state(self):
@@ -177,21 +208,61 @@ class VmsOrderLine(models.Model):
         for rec in self:
             rec.state = 'draft'
 
-    # @api.multi
-    # def create_po(self):
-    #     purchase_order_id = self.env['purchase.order'].create({
-    #         'partner_id': self.supplier_id.id,
-    #         'partner_ref': self.order_id.name,
-    #         'order_line': [(0, 0, {
-    #             'product_id': self.product_id.id,
-    #             'product_qty': self.qty_product,
-    #             'date_planned': fields.Datetime.now(),
-    #             'product_uom': self.product_id.uom_po_id.id,
-    #             'price_unit': self.product_id.standard_price,
-    #             'taxes_id': [(
-    #                 6, 0,
-    #                 [x.id for x in (
-    #                     self.product_id.supplier_taxes_id)]
-    #             )],
-    #             'name': self.product_id.name})]})
-    #     self.write({'purchase_order_id': purchase_order_id.id})
+    def purchase_generator(self):
+        partlist = []
+        if(len(self.spare_part_ids1) != 0):
+            for x in self:
+                for line in x.spare_part_ids1:
+                    partlist.append((0,0, {
+                        'product_id': line.product_id.id,
+                        'product_qty': line.product_qty,
+                        'product_uom_id': 1,
+                        'schedule_date': fields.Date.context_today(self),
+                    }))
+                if not partlist:
+                    raise Warning(_('Purchase requisition is already created!'))
+                if partlist:
+                    x.env['purchase.requisition'].create({
+                        'line_ids': partlist,
+                        'exclusive': 'multiple',
+                        'origin': x.order_id.name,
+                        'description': 'Demande de pièce pour la maintenece de la vehicule avec la matricul suivante '
+                    })
+        else:
+            raise ValidationError('Purchase request is empty!')
+
+    def assign_products_purchase(self):
+        po = []
+        for need_parts in self.spare_part_ids:
+            if need_parts.product_stock_qty > 0:
+                if need_parts.product_qty > need_parts.product_stock_qty:
+                    po.append((0, 0, {'product_uom_id': 1,'product_id': need_parts.product_id.id,
+                                          'product_qty': need_parts.product_qty - need_parts.product_stock_qty,'product_stock_qty': need_parts.product_id.qty_available}))
+            if need_parts.product_stock_qty <= 0:
+                po.append((0, 0, {'product_uom_id': 1,'product_id': need_parts.product_id.id, 'product_qty': need_parts.product_qty,
+                                      'product_stock_qty': need_parts.product_id.qty_available}))
+        return po
+
+    @api.multi
+    def compute_stock(self):
+        self.clear_field()
+        if(len(self.spare_part_ids) != 0):
+            for rec in self:
+                rec.spare_part_ids1=self.assign_products_purchase()
+            return True
+        else:
+            raise ValidationError('Spare parts are empty!')
+
+    #to clear field
+    def clear_field(self):
+        for rec in self:
+            rec.write({'spare_part_ids1': [(5, 0, 0)]})
+
+    def clear_field1(self):
+        for rec in self:
+            rec.write({'spare_part_ids': [(5, 0, 0)]})
+
+
+
+
+

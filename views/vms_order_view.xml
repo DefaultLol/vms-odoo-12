@@ -30,7 +30,7 @@
                 <header>
                     <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object"/>
                     <button icon="fa-arrow-right" class="oe_highlight" name="action_open" states="draft" string="Open" type="object"/>
-                    <button icon="fa-check-square-o" class="oe_highlight" name="action_released" states="open" string="Released" type="object"/>
+                    <button  name="%(vms.wizard_release_action)d" icon="fa-check-square-o" class="oe_highlight" states="open" string="Released" type="action"/>
                     <button icon="fa-pencil-square-o" name="print_mo" string="Print MO" type="object" states="draft,open" class="oe_highlight"/>
                     <field name="state" statusbar_visible="draft,open,released" widget="statusbar"/>
                 </header>

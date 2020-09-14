@@ -4,6 +4,11 @@ class VmsProductLine(models.Model):
     _description = 'VMS Product Lines'
     _name = 'vms.product.line'
 
+    @api.depends('product_id')
+    def _get_stock_value(self):
+        for rec in self:
+            rec.product_stock_qty=rec.product_id.qty_available
+
     product_id = fields.Many2one(
         'product.template',
         domain=[('spare_part','=',True)],
@@ -19,72 +24,16 @@ class VmsProductLine(models.Model):
         string='Unit of Measure',
         required=True,
     )
+    product_stock_qty=fields.Float(string="Stock quantity",compute='_get_stock_value',store=True)
+    # product_stock_qty = fields.Float(string="Stock quantity",default= lambda self:self.product_id.qty_available)
     task_id = fields.Many2one(
         'vms.task',
         string='Task',
     )
+    purchase_request = fields.Many2one('vms.order.line',string='PO line id')
     order_line_id = fields.Many2one(
         'vms.order.line',
         string='Activity')
-    # procurement_ids = fields.One2many(
-    #     'procurement.order',
-    #     'vms_product_line_id',
-    #     string='Procurement Orders',)
-
-    # @api.onchange('product_id')
-    # def _onchange_product_id(self):
-    #     self.product_uom_id = self.product_id.uom_id
-    #
-    # @api.multi
-    # def _prepare_order_line_procurement(self, group_id=False):
-    #     self.ensure_one()
-    #     order = self.order_line_id.order_id
-    #     prod_loc_id = (
-    #         order.warehouse_id.wh_vms_out_picking_type_id.
-    #         default_location_dest_id
-    #     )
-    #     return {
-    #         'name': self.product_id.name,
-    #         'origin': order.name,
-    #         'product_id': self.product_id.id,
-    #         'product_qty': self.product_qty,
-    #         'product_uom': self.product_uom_id.id,
-    #         'company_id': self.env.user.company_id.id,
-    #         'group_id': group_id,
-    #         'vms_product_line_id': self.id,
-    #         'date_planned': fields.Datetime.now(),
-    #         'location_id': prod_loc_id.id,
-    #         'route_ids': self.product_id.route_ids and [
-    #             (4, self.product_id.route_ids.ids)] or [],
-    #         'warehouse_id': order.warehouse_id.id,
-    #     }
-    #
-    # @api.multi
-    # def procurement_create(self):
-    #     new_procs = self.env['procurement.order']
-    #     proc_group_obj = self.env["procurement.group"]
-    #     for line in self:
-    #         if (line.order_line_id.state != 'process' or not
-    #                 line.product_id._need_procurement()):
-    #             continue
-    #         qty = 0.0
-    #         for procurement in line.procurement_ids:
-    #             qty += procurement.product_qty
-    #
-    #         if not line.order_line_id.order_id.procurement_group_id:
-    #             vals = line.order_line_id.order_id._prepare_procurement_group()
-    #             line.order_line_id.order_id.procurement_group_id = (
-    #                 proc_group_obj.create(vals)
-    #             )
-    #
-    #         vals = line._prepare_order_line_procurement(
-    #             line.order_line_id.order_id.procurement_group_id.id)
-    #         vals['product_qty'] = line.product_qty - qty
-    #         new_proc = self.env["procurement.order"].with_context(
-    #             procurement_autorun_defer=True).create(vals)
-    #         new_procs += new_proc
-    #     new_procs.run()
-    #     return new_procs
 
     def find_wh_id(self):
         res = self.env['stock.location'].search([
@@ -113,10 +62,15 @@ class VmsProductLine(models.Model):
         return products
 
     def move_prod(self,unit_id,products):
+        #get vms spare parts out option record to get the id
+        type=self.env['stock.picking.type'].search([
+            ('name','=','VMS Spare Parts OUT')
+        ])
+        stock_type_id=type.id
         self.env['stock.picking'].create({
             'location_id':self.find_wh_id(),
             'location_dest_id':self.find_vehicle_location_id(unit_id),
-            'picking_type_id':7,
+            'picking_type_id':stock_type_id,
             'origin':self.order_line_id.order_id.name,
             'odometer':unit_id.odometer,
             'move_ids_without_package':products
@@ -140,3 +94,8 @@ class VmsProductLine(models.Model):
         for y in self:
             y.move_prod(unit_id,products)
             break
+
+    @api.onchange('product_id')
+    def get_stock(self):
+        self.product_stock_qty=self.product_id.qty_available
+

@@ -10,4 +10,5 @@ from . import product
 from . import type_spare_part
 from . import vms_product_line
 from . import vms_order_line
-from .import stock_warehouse
+from . import stock_warehouse
+from . import fleet_vehicule_odometer
