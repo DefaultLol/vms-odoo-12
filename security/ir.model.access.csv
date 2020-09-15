@@ -7,4 +7,5 @@ access_vms_program,access_vms_program,model_vms_program,,1,1,1,1
 access_vms_task,access_vms_task,model_vms_task,,1,1,1,1
 access_vms_product_line,access_vms_product_line,model_vms_product_line,,1,1,1,1
 access_vms_order_line,access_vms_order_line,model_vms_order_line,,1,1,1,1
+access_vms_cycle_type,access_vms_cycle_type,model_vms_cycle_type,,1,1,1,1
 

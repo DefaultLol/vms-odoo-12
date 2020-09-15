@@ -11,6 +11,7 @@
                         <field name='active'/>
                         <field name='frequency'/>
                         <field name='uom_id' />
+                        <field name='type' />
                     </group>
                     <group string='Tasks'>
                         <field name="task_ids" nolabel="1">

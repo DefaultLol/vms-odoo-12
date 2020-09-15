@@ -245,5 +245,61 @@ class VmsOrder(models.Model):
     @api.model
     def create_order(self):
         vehicles=self.env['fleet.vehicle'].search([])
+        cycles=self.env['vms.cycle'].search([],order="frequency asc")
+        choosen=[]
+        k=0
         for vehicle in vehicles:
-            print(vehicle.name)
+            order = self.env['vms.order'].search([
+                ('unit_id', '=',vehicle.id),
+                ('state','!=','released')
+            ])
+            if(order):
+                print('stoppppppppppp')
+            else:
+                print('Vehicle: {}'.format(vehicle.name))
+                odometer_log = self.env['fleet.vehicle.odometer'].search([
+                    ('vehicle_id','=',vehicle.id),
+                    ('type','=','maintenance')
+                ],order="value desc")
+                print(odometer_log)
+                #current odometer of vehicle
+                veh_odometer=vehicle.odometer
+                for cycle in cycles:
+                    if(veh_odometer >= cycle.frequency):
+                        choosen.append(cycle)
+                if(len(choosen) != 0):
+                    if(len(odometer_log) == 0):
+                        print('create order')
+                        self.order_creation(vehicle,choosen[0])
+                    else:
+                        for log in odometer_log:
+                            if(log.value >= choosen[0].frequency):
+                                print('do nothing')
+                                k=1
+                        if(k==1):
+                            print('do nothing')
+                        else:
+                            print('create order')
+                            self.order_creation(vehicle,choosen[0])
+                else:
+                    print('do nothing')
+
+    def order_creation(self,vehicle,cycle):
+        tasks=self.create_task(cycle.task_ids)
+        self.env['vms.order'].create({
+            'operating_unit_id':self.env['operating.unit'].search([])[0].id,
+            'unit_id':vehicle.id,
+            'type':'preventive',
+            'supervisor_id':self.env['hr.employee'].search([])[0].id,
+            'current_odometer':vehicle.odometer,
+            'order_line_ids':tasks
+        })
+
+    def create_task(self,tasks):
+        data=[]
+        for task in tasks:
+            print(task)
+            data.append((0,0,{
+                'task_id':task.id,
+            }))
+        return data
