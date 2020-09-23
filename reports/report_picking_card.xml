@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_sortie_picking">
+        <t t-call="web.html_container">
+            <t t-call="web.internal_layout">
+                <t t-foreach="docs" t-as="doc">
+                    <t t-set="partner" t-value="doc.partner_id or (doc.move_lines and doc.move_lines[0].partner_id) or False"/>
+                    <t t-if="partner" name="partner_header">
+                        <t t-set="address">
+                            <div t-esc="partner"
+                            t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True}'/>
+                       </t>
+                    </t>
+                    <div class="page">
+                        <h2>
+                            <span t-field="doc.name" />
+                        </h2>
+                        <table class="table table-sm mt-5">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Date</th>
+                                    <th>Source</th>
+                                    <th>Cible</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><t t-esc="doc.origin" /></td>
+                                    <td><t t-esc="doc.scheduled_date" /></td>
+                                    <td><t t-esc="doc.location_id.name" /></td>
+                                    <td><t t-esc="doc.location_dest_id.name" /></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <t t-foreach="doc.move_ids_without_package" t-as="line" >
+                            <table class="table table-sm mt-5">
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Quantité</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><t t-esc="line.product_id.name" /></td>
+                                        <td><t t-esc="line.quantity_done" /></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <div class="container mt-5 text-center">
+                            <div class="row">
+                                <div class="col-4">Responsable maintenance :</div>
+                                <div class="col-4">Responsable de stock :</div>
+                                <div class="col-4">Visa :</div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -9,3 +9,5 @@ class FleetVehicle(models.Model):
         ('gasoil','Gasoil'),
         ('autre','Autre')
     ],string="Type",default='autre')
+    order_id=fields.Many2one('vms.order',string='Order')
+    # cycle_types = fields.Many2many('vms.cycle.type', string='Cycle Types')

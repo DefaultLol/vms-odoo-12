@@ -8,20 +8,20 @@
                 <group string="Stock picking">
                     <field name="invisible_field" invisible="1" />
                     <field name="finished" invisible="1" />
-                    <field name="transfert" nolabel="1">
+                    <field name="transfert" widget="many2many" nolabel="1">
                         <tree>
                             <field name="name" />
                             <field name="state" />
                         </tree>
                     </field>
                 </group>
+                <footer>
+                    <label for="my_button" class="btn btn-md btn-primary" string="Confirm"
+                           attrs="{'invisible': [('finished','=', True)]}" />
+                    <field name="my_button" invisible="1"/>
+                    <button class="oe_link" special="cancel" string="Cancel"/>
+                </footer>
             </form>
-            <footer>
-                <label for="my_button" class="btn btn-md btn-primary" string="Confirm"
-                       attrs="{'invisible': [('finished','=', True)]}" />
-                <field name="my_button" invisible="1"/>
-                <button class="oe_link" special="cancel" string="Cancel"/>
-            </footer>
         </field>
     </record>
     <record model="ir.actions.act_window" id="wizard_release_action">

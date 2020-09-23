@@ -38,10 +38,13 @@
         'wizards/vms_wizard_maintenance_order_view.xml',
         'reports/report.xml',
         'reports/report_card.xml',
+        'reports/report_order_card.xml',
+        'reports/report_picking_card.xml',
         'data/report_sequence.xml',
         'data/ir_sequence_data.xml',
         'data/stock_picking_type_data.xml',
-        'data/cron_order.xml'
+        'data/cron_order.xml',
+        'data/mail_template.xml'
     ],
     'demo': [
     ],

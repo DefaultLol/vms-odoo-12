@@ -8,6 +8,8 @@
         <field name="arch" type="xml">
             <xpath expr="//group" position="inside">
                 <field name="type" />
+                <field name="order_id" attrs="{'invisible': [('type','!=', 'maintenance')]}" />
+<!--                <field name="cycle_types" attrs="{'invisible': [('type','!=', 'maintenance')]}" />-->
             </xpath>
         </field>
     </record>
@@ -20,7 +22,9 @@
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="type" />
+                <field name="order_id" attrs="{'invisible': [('type','!=', 'maintenance')]}" />
             </xpath>
         </field>
     </record>
+
 </odoo>

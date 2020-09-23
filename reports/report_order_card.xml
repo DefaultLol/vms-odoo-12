@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_order">
+        <t t-call="web.html_container">
+            <h4>Order report</h4>
+            <t t-call="web.internal_layout">
+                <t t-foreach="docs" t-as="doc">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6"><strong>Date : </strong><t t-esc="doc.date" /></div>
+                            <div class="col-6"><strong>Base : </strong><t t-esc="doc.unit_id.name" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><strong>Unit : </strong><t t-esc="doc.unit_id.model_id.name" /></div>
+                            <div class="col-6"><strong>Kilometrage : </strong><t t-esc="doc.unit_id.odometer" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><strong>Warehouse : </strong><span t-raw="doc.warehouse_id.name"></span></div>
+                            <div class="col-6"><strong>Superviseur : </strong><t t-esc="doc.supervisor_id.name" /></div>
+                        </div>
+                        <div class="row mt-5">
+                            <div class="offset-8 col-3">
+                                <p>Signature</p>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

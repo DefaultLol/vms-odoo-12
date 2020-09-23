@@ -13,5 +13,12 @@
             </form>
         </field>
     </record>
-    <act_window id="action_waybill_wizard_mo" key2="client_action_multi" name="Create Manteinance Order" res_model="vms.wizard.maintenance.order" src_model="vms.report" target="new" view_mode="form"/>
+    <act_window
+            id="action_waybill_wizard_mo"
+            key2="client_action_multi"
+            name="Create Manteinance Order"
+            res_model="vms.wizard.maintenance.order"
+            src_model="vms.report"
+            target="new"
+            view_mode="form"/>
 </odoo>

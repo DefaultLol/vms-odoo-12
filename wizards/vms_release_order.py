@@ -2,6 +2,7 @@ from datetime import datetime
 from odoo import fields,api,models
 from odoo.exceptions import ValidationError
 
+
 class VmsReleaseOrder(models.TransientModel):
     _name='vms.wizard.release.order'
 
@@ -19,12 +20,11 @@ class VmsReleaseOrder(models.TransientModel):
         pickings=self.env['stock.picking'].search([
             ('origin','=',name)
         ])
-        data = []
+        ids=[]
+        data=[]
         for rec in pickings:
-            data.append((0, 0, {
-                'name': rec.name,
-                'state': rec.state
-            }))
+            ids.append(rec.id)
+        data.append((6, None, ids))
         res['transfert'] = data
 
         return res
@@ -75,7 +75,8 @@ class VmsReleaseOrder(models.TransientModel):
             'vehicle_id': order.unit_id.id,
             'driver_id': order.unit_id.driver_id,
             'value': odometer,
-            'type': 'maintenance'
+            'type': 'maintenance',
+            'order_id':order.id
         })
 
 

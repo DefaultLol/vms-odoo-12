@@ -9,4 +9,24 @@
         name="vms.report_report"
         file="vms.report_report"
     />
+
+    <report
+        id="report_order_card"
+        string="Order Report pdf"
+        model="vms.order"
+        report_type="qweb-pdf"
+        name="vms.report_order"
+        file="vms.report_order"
+    />
+
+    <report
+        id="report_picking_card"
+        string="Rapport de sortie"
+        model="stock.picking"
+        report_type="qweb-pdf"
+        name="vms.report_sortie_picking"
+        file="vms.report_sortie_picking"
+    />
+
+
 </odoo>

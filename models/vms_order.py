@@ -67,61 +67,26 @@ class VmsOrder(models.Model):
     unit_id = fields.Many2one(
         'fleet.vehicle',
         string='Unit', required=True, store=True)
-    # picking_ids = fields.Many2many(
-    #     'stock.picking',
-    #     compute='_compute_picking_ids',
-    #     string='Stock Pickings',
-    #     copy=False,)
-    # pickings_count = fields.Integer(
-    #     string='Delivery Orders',
-    #     compute='_compute_pickings_count',
-    #     copy=False,)
-    # procurement_group_id = fields.Many2one(
-    #     'procurement.group',
-    #     string='Procurement Group',
-    #     readonly=True,
-    #     copy=False,)
+    cycle_types=fields.Many2many('vms.cycle',string='Cycle Types')
 
     @api.onchange('program_id')
     def change_program(self):
         self.order_line_ids=False
         for cycle in self.program_id.cycle_ids:
             for task in cycle.task_ids:
+                data=[]
+                for parts in task.spare_part_ids:
+                    print(parts.id)
+                    data.append(parts.id)
+                print(task.id)
                 spare = self.order_line_ids.new({
                     'task_id': task.id,
                     'duration': task.duration,
+                    'state':'draft',
+                    'start_date':fields.Datetime.now(),
+                    'spare_part_ids':[(6,None,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])]
                 })
                 self.order_line_ids += spare
-    # @api.multi
-    # @api.depends('procurement_group_id')
-    # def _compute_picking_ids(self):
-    #     for rec in self:
-    #         rec.picking_ids = (
-    #             self.env['stock.picking'].search(
-    #                 [('group_id', '=', rec.procurement_group_id.id)])
-    #             if rec.procurement_group_id else [])
-    #
-    # @api.multi
-    # @api.depends('picking_ids')
-    # def _compute_pickings_count(self):
-    #     for rec in self:
-    #         rec.pickings_count = (
-    #             self.env['stock.picking'].search_count(
-    #                 [('group_id', '=', rec.procurement_group_id.id)])
-    #             if rec.procurement_group_id else 0)
-    #
-    # @api.multi
-    # def action_view_pickings(self):
-    #     action = self.env.ref('stock.action_picking_tree_all').read()[0]
-    #
-    #     pickings = self.mapped('picking_ids')
-    #     if len(pickings) > 1:
-    #         action['domain'] = [('id', 'in', pickings.ids)]
-    #     elif pickings:
-    #         action['views'] = [
-    #             (self.env.ref('stock.view_picking_form').id, 'form')]
-    #         action['res_id'] = pickings.id
-    #     return action
 
     @api.model
     def _default_warehouse_id(self):
@@ -231,75 +196,134 @@ class VmsOrder(models.Model):
     #             for spare in line.spare_part_ids:
     #                 spare.state = 'draft'
     #
-    # def _prepare_procurement_group(self):
-    #     return {
-    #         'name': self.name,
-    #         'move_type': 'direct',
-    #     }
-    #
-    # @api.multi
-    # def print_mo(self):
-    #     return self.env['report'].get_action(self, 'vms.report_maintenance')
+    @api.multi
+    def print_mo(self):
+        return self.env['report'].get_action(self, 'vms.report_order')
 
     # This method will be executed by the planned action to create new order
     @api.model
     def create_order(self):
         vehicles=self.env['fleet.vehicle'].search([])
         cycles=self.env['vms.cycle'].search([],order="frequency asc")
-        choosen=[]
+        print('first')
+        print(cycles)
+        possible_cycles=[]
+        choosen_cycles=[]
         k=0
         for vehicle in vehicles:
+            #take orders corresponding to the vehicle which are not released
             order = self.env['vms.order'].search([
                 ('unit_id', '=',vehicle.id),
                 ('state','!=','released')
             ])
+            #if order exist stop
             if(order):
-                print('stoppppppppppp')
+                #go to next
+                print('order already exist')
+                continue
             else:
                 print('Vehicle: {}'.format(vehicle.name))
-                odometer_log = self.env['fleet.vehicle.odometer'].search([
-                    ('vehicle_id','=',vehicle.id),
-                    ('type','=','maintenance')
-                ],order="value desc")
-                print(odometer_log)
                 #current odometer of vehicle
                 veh_odometer=vehicle.odometer
                 for cycle in cycles:
                     if(veh_odometer >= cycle.frequency):
-                        choosen.append(cycle)
-                if(len(choosen) != 0):
-                    if(len(odometer_log) == 0):
-                        print('create order')
-                        self.order_creation(vehicle,choosen[0])
-                    else:
-                        for log in odometer_log:
-                            if(log.value >= choosen[0].frequency):
-                                print('do nothing')
-                                k=1
-                        if(k==1):
-                            print('do nothing')
-                        else:
-                            print('create order')
-                            self.order_creation(vehicle,choosen[0])
+                        possible_cycles.append(cycle)
+                        print(cycle.name)
+                choosen_cycles = self.get_final_choosen_cyle(possible_cycles,vehicle)
+                print('choooooooosen')
+                print(choosen_cycles)
+                if(len(choosen_cycles) != 0):
+                    self.order_creation(vehicle,choosen_cycles)
                 else:
                     print('do nothing')
 
-    def order_creation(self,vehicle,cycle):
-        tasks=self.create_task(cycle.task_ids)
-        self.env['vms.order'].create({
-            'operating_unit_id':self.env['operating.unit'].search([])[0].id,
-            'unit_id':vehicle.id,
-            'type':'preventive',
-            'supervisor_id':self.env['hr.employee'].search([])[0].id,
-            'current_odometer':vehicle.odometer,
-            'order_line_ids':tasks
-        })
+    def order_creation(self,vehicle,cycles):
+        if len(cycles)!=0:
+            tasks=self.create_task_list(cycles)
+            cycle=self.create_cycle_list(cycles)
+            self.env['vms.order'].create({
+                'operating_unit_id':self.env['operating.unit'].search([])[0].id,
+                'unit_id':vehicle.id,
+                'type':'preventive',
+                'supervisor_id':self.env['hr.employee'].search([])[0].id,
+                'current_odometer':vehicle.odometer,
+                'order_line_ids':tasks,
+                'cycle_types':cycle
+            })
+            template_id = self.env.ref('vms.email_template_order_creation').id
+            email_values = {'key': u'value'}
+            self.env['mail.template'].browse(template_id).with_context(email_values).send_mail(self.id, force_send=True)
+        else:
+            print('can\'t create')
 
-    def create_task(self,tasks):
+    def create_task_list(self,cycles):
         data=[]
-        for task in tasks:
-            print(task)
-            data.append((0,0,{
-                'task_id':task.id,
-            }))
+        for cycle in cycles:
+            for task in cycle.task_ids:
+                data.append((0,0,{
+                    'task_id':task.id,
+                    'duration':task.duration
+                }))
         return data
+
+    def create_cycle_list(self,cycles):
+        data=[]
+        for cycle in cycles:
+            data.append((4,cycle.id))
+        return data
+
+    # This method check if in out choosen array is their cycle with the same type and just leave only one type of cycle
+    def check_cycle_type(self,cycle,current_cycle):
+        #chec if current cycle should stay in array of cycle or not
+        stay=True
+        for rec in cycle:
+            if(rec != current_cycle):
+                if rec.type == current_cycle.type:
+                    if current_cycle.frequency < rec.frequency:
+                        stay=False
+        return stay
+
+    # Get array of choosen cycles
+    def get_final_choosen_cyle(self,possible_cycles,vehicle):
+        print('final')
+        choosen_cycles=[]
+        for rec in possible_cycles:
+            stay=self.check_cycle_type(possible_cycles,rec)
+            if stay:
+                print(rec.name)
+                choosen_cycles.append(rec)
+        choosen_cycles=self.check_odometer_history(vehicle,choosen_cycles)
+        print(choosen_cycles)
+        if choosen_cycles==None:
+            return []
+        return choosen_cycles
+
+    def check_odometer_history(self,vehicle,cycles):
+        choosen_cycles=[]
+        exist=False
+        # get odometer history log of the vehicle which type is maintenance with descending order
+        odometer_log = self.env['fleet.vehicle.odometer'].search([
+            ('vehicle_id', '=', vehicle.id),
+            ('type', '=', 'maintenance')
+        ])
+        if len(odometer_log) != 0:
+            for cycle in cycles:
+                for rec in odometer_log:
+                    if cycle in rec.order_id.cycle_types:
+                        exist=True
+                if not exist:
+                    choosen_cycles.append(cycle)
+            return choosen_cycles
+        else:
+            return cycles
+
+    def send_mail(self):
+        template_id=self.env.ref('vms.email_template_order_creation').id
+        self.env['mail.template'].browse(template_id).send_mail(self.id,force_send=True)
+
+
+
+
+
+
+

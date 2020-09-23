@@ -63,6 +63,9 @@
                             <group string="Tasks" attrs="{'invisible':[('name', '=', False)]}">
                                 <field context="{'default_order_id': active_id}" name="order_line_ids" nolabel="1"/>
                             </group>
+                            <group string="Cycle Type" attrs="{'invisible':[('name', '=', False)]}">
+                                <field name="cycle_types" nolabel="1"/>
+                            </group>
                         </page>
                         <page string="MRO Program Details" attrs="{'invisible':[('type','in',(False,'corrective'))]}">
                             <group>

@@ -102,9 +102,9 @@ class VmsOrderLine(models.Model):
     #     })
     #     return res
 
-    def get_current_task(self):
-        print(self.task_id)
-        return self.task_id
+    # def get_current_task(self):
+    #     print(self.task_id)
+    #     return self.task_id
 
     @api.multi
     def unlink(self):
@@ -173,7 +173,16 @@ class VmsOrderLine(models.Model):
     @api.multi
     def get_real_duration(self):
         for rec in self:
-            rec.real_duration = sum([task.duration for task in rec.task_id])
+            rec.end_date_real=datetime.now()
+            test=rec.end_date_real-rec.start_date_real
+            seconds = test.total_seconds()
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            seconds = seconds % 60
+            t, hours = divmod(float(hours), 24)
+            t, minutes = divmod(float(minutes), 60)
+            # rec.real_duration = sum([task.duration for task in rec.task_id])
+            rec.real_duration=hours
 
     @api.multi
     def action_done(self):
@@ -191,8 +200,7 @@ class VmsOrderLine(models.Model):
     def action_cancel(self):
         for rec in self:
             if not rec.external:
-                if self.mapped('spare_part_ids').filtered(
-                        lambda x: x.state == 'done'):
+                if self.mapped('spare_part_ids').filtered(lambda x: x.state == 'done'):
                     raise ValidationError(
                         _('Error, you cannot cancel a maintenance order'
                             ' with done stock moves.'))
